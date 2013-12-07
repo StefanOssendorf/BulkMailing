@@ -1,0 +1,39 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SendMail", "..\samples\SendSingleMail\SendMail.csproj", "{DA1AB4D8-223D-43D1-9B7B-8BE05E31E20F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{82692C3B-F9DF-4787-9FEA-AC28ECE6FD3E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{2464922C-3199-485A-B056-2EA4C72EA178}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StefanOssendorf.BulkMailing", "StefanOssendorf.BulkMailing\StefanOssendorf.BulkMailing.csproj", "{C100241C-E4A4-45A8-898B-1B5529CF52BB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{77687723-5D3A-4704-8F85-B8A9C0497E84}"
+	ProjectSection(SolutionItems) = preProject
+		..\README.md = ..\README.md
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DA1AB4D8-223D-43D1-9B7B-8BE05E31E20F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DA1AB4D8-223D-43D1-9B7B-8BE05E31E20F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DA1AB4D8-223D-43D1-9B7B-8BE05E31E20F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DA1AB4D8-223D-43D1-9B7B-8BE05E31E20F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C100241C-E4A4-45A8-898B-1B5529CF52BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C100241C-E4A4-45A8-898B-1B5529CF52BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C100241C-E4A4-45A8-898B-1B5529CF52BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C100241C-E4A4-45A8-898B-1B5529CF52BB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{C100241C-E4A4-45A8-898B-1B5529CF52BB} = {2464922C-3199-485A-B056-2EA4C72EA178}
+		{DA1AB4D8-223D-43D1-9B7B-8BE05E31E20F} = {82692C3B-F9DF-4787-9FEA-AC28ECE6FD3E}
+	EndGlobalSection
+EndGlobal
