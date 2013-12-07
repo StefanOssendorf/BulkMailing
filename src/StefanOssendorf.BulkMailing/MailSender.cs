@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace StefanOssendorf.BulkMailing {
     /// <summary>
-    /// Allows applications to send (mass) e-mails by using the Simple Mail Transfer Protocol (SMTP).
+    /// Allows applications to send bulk mailings by using the Simple Mail Transfer Protocol (SMTP).
     /// </summary>
     public class MailSender : IDisposable {
         #region [ Fields ]
@@ -112,7 +112,7 @@ namespace StefanOssendorf.BulkMailing {
             mIsInCall = true;
             var result = new Collection<MailSendResult>();
             try {
-                result = await Task.Factory.StartNew((Func<object, Collection<MailSendResult>>)SendMassMailMessages, mailMessages, mCancellationTokenSource.Token, TaskCreationOptions.AttachedToParent, TaskScheduler.Default).ConfigureAwait(false);
+                result = await Task.Factory.StartNew((Func<object, Collection<MailSendResult>>)SendBulkMailMessages, mailMessages, mCancellationTokenSource.Token, TaskCreationOptions.AttachedToParent, TaskScheduler.Default).ConfigureAwait(false);
             } finally {
                 mIsInCall = false;
             }
@@ -136,7 +136,7 @@ namespace StefanOssendorf.BulkMailing {
             }
         }
 
-        private Collection<MailSendResult> SendMassMailMessages(object mailMessages) {
+        private Collection<MailSendResult> SendBulkMailMessages(object mailMessages) {
             var messages = new List<MailSenderMessage>((IEnumerable<MailSenderMessage>)mailMessages);
             var options = new ParallelOptions { CancellationToken = mCancellationTokenSource.Token };
             var usedSmtpClients = new ConcurrentBag<SmtpClient>();

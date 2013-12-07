@@ -50,7 +50,7 @@ namespace SendSingleMail {
 
         static void Main(string[] args) {
             SendSingleMailAsyncExample();
-            SendMassMailExample();
+            SendBulkMailExample();
         }
 
         private static void SendSingleMailAsyncExample() {
@@ -73,7 +73,7 @@ namespace SendSingleMail {
             }
         }
 
-        private static void SendMassMailExample() {
+        private static void SendBulkMailExample() {
             using (var sender = CreateMailSender()) {
                 var list = new List<MailSenderMessage>();
 
