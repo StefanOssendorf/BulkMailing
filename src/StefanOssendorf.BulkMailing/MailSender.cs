@@ -112,7 +112,7 @@ namespace StefanOssendorf.BulkMailing {
             mIsInCall = true;
             var result = new Collection<MailSendResult>();
             try {
-                result = await Task.Factory.StartNew((Func<object, Collection<MailSendResult>>)SendBulkMailMessages, mailMessages, mCancellationTokenSource.Token, TaskCreationOptions.AttachedToParent, TaskScheduler.Default).ConfigureAwait(false);
+                result = await Task.Factory.StartNew((Func<object, Collection<MailSendResult>>)SendBulkMailMessages, mailMessages, mCancellationTokenSource.Token, TaskCreationOptions.None, TaskScheduler.Default).ConfigureAwait(false);
             } finally {
                 mIsInCall = false;
             }
@@ -148,7 +148,7 @@ namespace StefanOssendorf.BulkMailing {
                 Parallel.ForEach(Partitioner.Create(0, mails.Count), options, range => {
                     var smtp = CreateAndConfigureSmtpClient();
                     usedSmtpClients.Add(smtp);
-                    
+
                     for (int i = range.Item1; i < range.Item2; i++) {
                         SendMail(smtp, mails[i]);
                         if (options.CancellationToken.IsCancellationRequested) {
@@ -203,8 +203,8 @@ namespace StefanOssendorf.BulkMailing {
             smtp.EnableSsl = mSmtpConfiguration.EnableSsl;
             return smtp;
         }
-        private static void DisposeUsedSmtpClients(ConcurrentBag<SmtpClient> usedSmtpClients) {
-            Task.Factory.StartNew(smtpClients => new List<SmtpClient>((IEnumerable<SmtpClient>)smtpClients).ForEach(item => item.Dispose()), usedSmtpClients).ConfigureAwait(false);
+        private static void DisposeUsedSmtpClients(IEnumerable<SmtpClient> usedSmtpClients) {
+            Task.Run(() => new List<SmtpClient>(usedSmtpClients).ForEach(item => item.Dispose())).ConfigureAwait(false);
         }
         #endregion
         #region Implementation of IDisposable
