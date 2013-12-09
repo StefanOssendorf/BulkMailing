@@ -39,5 +39,16 @@ namespace StefanOssendorf.BulkMailing {
         public SmtpConfiguration() {
             Port = 25;
         }
+
+        internal virtual SmtpConfiguration Clone() {
+            return new SmtpConfiguration {
+                EnableSsl = EnableSsl,
+                Host = Host,
+                Password = Password,
+                Port = Port,
+                UseDefaultCredentials = UseDefaultCredentials,
+                UserName = UserName
+            };
+        }
     }
 }

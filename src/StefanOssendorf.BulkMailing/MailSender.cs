@@ -19,8 +19,11 @@ namespace StefanOssendorf.BulkMailing {
         private readonly SmtpConfiguration mSmtpConfiguration;
         private readonly CancellationTokenSource mCancellationTokenSource;
         private SmtpClient mSingleSendSmtpClient;
+        private readonly ConcurrentQueue<SmtpClient> mBulkClients;
         private bool mIsDisposed;
         private bool mIsInCall;
+        private int mPartitions;
+        private int mClientCount;
         #endregion
         /// <summary>
         /// Initializes a new instance of the <see cref="MailSender"/> class by using configuration file settings. 
@@ -35,8 +38,11 @@ namespace StefanOssendorf.BulkMailing {
         /// <param name="smtpConfiguration"></param>
         public MailSender(SmtpConfiguration smtpConfiguration) {
             Contract.Requires<ArgumentNullException>(smtpConfiguration != null);
-            mSmtpConfiguration = smtpConfiguration;
+            mSmtpConfiguration = smtpConfiguration.Clone();
             mCancellationTokenSource = new CancellationTokenSource();
+            mBulkClients = new ConcurrentQueue<SmtpClient>();
+            mPartitions = 0;
+            mClientCount = 0;
         }
 
         /// <summary>
@@ -77,22 +83,17 @@ namespace StefanOssendorf.BulkMailing {
             mIsInCall = true;
             var result = new MailSendResult { MailMessage = message.Message, UserIdentifier = message.UserIdentifier };
 
-
-            using (var smtp = CreateAndConfigureSmtpClient()) {
-                mSingleSendSmtpClient = smtp;
-
-                try {
-                    await smtp.SendMailAsync(message.Message).ConfigureAwait(false);
-                    result.Successful = true;
-                } catch (OperationCanceledException) {
-                    result.Cancelled = true;
-                } catch (Exception exception) {
-                    result.Exception = exception;
-                    result.HasError = true;
-                } finally {
-                    mSingleSendSmtpClient = null;
-                    mIsInCall = false;
-                }
+            mSingleSendSmtpClient = CreateAndConfigureSmtpClient();
+            try {
+                await mSingleSendSmtpClient.SendMailAsync(message.Message).ConfigureAwait(false);
+                result.Successful = true;
+            } catch (OperationCanceledException) {
+                result.Cancelled = true;
+            } catch (Exception exception) {
+                result.Exception = exception;
+                result.HasError = true;
+            } finally {
+                mIsInCall = false;
             }
 
             return result;
@@ -139,34 +140,39 @@ namespace StefanOssendorf.BulkMailing {
         private Collection<MailSendResult> SendBulkMailMessages(object mailMessages) {
             var messages = new List<MailSenderMessage>((IEnumerable<MailSenderMessage>)mailMessages);
             var options = new ParallelOptions { CancellationToken = mCancellationTokenSource.Token };
-            var usedSmtpClients = new ConcurrentBag<SmtpClient>();
             var mails = new List<MailSendResult>();
+            var bag = new ConcurrentBag<SmtpClient>();
 
             messages.ForEach(msg => mails.Add(new MailSendResult { MailMessage = msg.Message, UserIdentifier = msg.UserIdentifier }));
 
             try {
                 Parallel.ForEach(Partitioner.Create(0, mails.Count), options, range => {
-                    var smtp = CreateAndConfigureSmtpClient();
-                    usedSmtpClients.Add(smtp);
-
+                    Interlocked.Increment(ref mPartitions);
+                    SmtpClient smtp;
+                    if (!mBulkClients.TryDequeue(out smtp)) {
+                        smtp = CreateAndConfigureSmtpClient();
+                        bag.Add(smtp);
+                        Interlocked.Increment(ref mClientCount);
+                    }
                     for (int i = range.Item1; i < range.Item2; i++) {
                         SendMail(smtp, mails[i]);
                         if (options.CancellationToken.IsCancellationRequested) {
+                            mBulkClients.Enqueue(smtp);
                             return;
                         }
                     }
+                    mBulkClients.Enqueue(smtp);
                 });
             } catch (OperationCanceledException) {
                 mails.Where(item => !item.HasError && !item.Successful).ToList().ForEach(item => item.Cancelled = true);
-            } finally {
-                DisposeUsedSmtpClients(usedSmtpClients);
             }
 
             return new Collection<MailSendResult>(mails);
         }
         private static void SendMail(SmtpClient smtp, MailSendResult sendResult) {
             try {
-                smtp.Send(sendResult.MailMessage);
+                //smtp.Send(sendResult.MailMessage);
+                smtp.SendMailAsync(sendResult.MailMessage).RunSynchronously();
                 sendResult.Successful = true;
             } catch (Exception exception) {
                 sendResult.Exception = exception;
@@ -203,9 +209,6 @@ namespace StefanOssendorf.BulkMailing {
             smtp.EnableSsl = mSmtpConfiguration.EnableSsl;
             return smtp;
         }
-        private static void DisposeUsedSmtpClients(IEnumerable<SmtpClient> usedSmtpClients) {
-            Task.Run(() => new List<SmtpClient>(usedSmtpClients).ForEach(item => item.Dispose())).ConfigureAwait(false);
-        }
         #endregion
         #region Implementation of IDisposable
         /// <summary>
@@ -224,6 +227,13 @@ namespace StefanOssendorf.BulkMailing {
             }
             if (mCancellationTokenSource != null) {
                 mCancellationTokenSource.Dispose();
+            }
+            if (!mBulkClients.IsEmpty) {
+                while (!mBulkClients.IsEmpty) {
+                    SmtpClient smtp;
+                    mBulkClients.TryDequeue(out smtp);
+                    smtp.Dispose();
+                }
             }
             mIsDisposed = true;
         }

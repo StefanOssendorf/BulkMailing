@@ -49,26 +49,30 @@ namespace SendSingleMail {
 
 
         static void Main(string[] args) {
-            SendSingleMailAsyncExample();
+            //SendSingleMailAsyncExample();
             SendBulkMailExample();
         }
 
         private static void SendSingleMailAsyncExample() {
             using (var sender = CreateMailSender()) {
 
-                var message = new MailMessage("from1@domain.de", "to1@domain.de");
-                message.Body = "Das hier ist ein toller Plain Body";
-                message.Subject = "Ganz toller Subject";
+                for (int i = 0; i < 10; i++) {
 
-                var t1 = sender.SendAsync(message, "UniqueIdentifier");
 
-                // If you want to cancel the send
-                // sender.SendAsyncCancel();
+                    var message = new MailMessage("from1@domain.de", "to1@domain.de");
+                    message.Body = "Das hier ist ein toller Plain Body";
+                    message.Subject = "Ganz toller Subject";
 
-                var result = t1.Result;
-                Console.WriteLine("Successful: {0}", result.Successful);
-                Console.WriteLine("Cancelled: {0}", result.Cancelled);
-                Console.WriteLine("Exception: {0}", result.Exception);
+                    var t1 = sender.SendAsync(message, "UniqueIdentifier");
+
+                    // If you want to cancel the send
+                    // sender.SendAsyncCancel();
+
+                    var result = t1.Result;
+                    Console.WriteLine("Successful: {0}", result.Successful);
+                    Console.WriteLine("Cancelled: {0}", result.Cancelled);
+                    Console.WriteLine("Exception: {0}", result.Exception);
+                }
                 Console.ReadLine();
             }
         }
