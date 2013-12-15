@@ -46,33 +46,26 @@ namespace SendSingleMail {
         }
         #endregion
 
-
-
         static void Main(string[] args) {
-            //SendSingleMailAsyncExample();
+            SendSingleMailAsyncExample();
             SendBulkMailExample();
         }
 
         private static void SendSingleMailAsyncExample() {
             using (var sender = CreateMailSender()) {
+                var message = new MailMessage("from1@domain.de", "to1@domain.de") {
+                    Body = "Das hier ist ein toller Plain Body",
+                    Subject = "Ganz toller Subject"
+                };
+                var t1 = sender.SendAsync(message, "UniqueIdentifier");
 
-                for (int i = 0; i < 10; i++) {
+                // If you want to cancel the send
+                // sender.SendAsyncCancel();
 
-
-                    var message = new MailMessage("from1@domain.de", "to1@domain.de");
-                    message.Body = "Das hier ist ein toller Plain Body";
-                    message.Subject = "Ganz toller Subject";
-
-                    var t1 = sender.SendAsync(message, "UniqueIdentifier");
-
-                    // If you want to cancel the send
-                    // sender.SendAsyncCancel();
-
-                    var result = t1.Result;
-                    Console.WriteLine("Successful: {0}", result.Successful);
-                    Console.WriteLine("Cancelled: {0}", result.Cancelled);
-                    Console.WriteLine("Exception: {0}", result.Exception);
-                }
+                var result = t1.Result;
+                Console.WriteLine("Successful: {0}", result.Successful);
+                Console.WriteLine("Cancelled: {0}", result.Cancelled);
+                Console.WriteLine("Exception: {0}", result.Exception);
                 Console.ReadLine();
             }
         }
@@ -81,7 +74,7 @@ namespace SendSingleMail {
             using (var sender = CreateMailSender()) {
                 var list = new List<MailSenderMessage>();
 
-                for (int i = 0; i < 5000; i++) {
+                for (int i = 0; i < 10000; i++) {
                     string to = string.Format("to{0}@domain.de", i);
                     string from = string.Format("from{0}@domain.de", i);
                     string subject = string.Format("Subject {0}", i);
@@ -93,12 +86,13 @@ namespace SendSingleMail {
                 }
 
                 var t1 = sender.SendAsync(list);
-                Console.ReadLine();
-                if (!t1.IsCompleted) {
-                    sender.SendAsyncCancel();
-                }
-                var result = t1.Result;
+                
+                //Console.ReadLine();
+                //if (!t1.IsCompleted) {
+                //    sender.SendAsyncCancel();
+                //}
 
+                var result = t1.Result;
                 foreach (var sendResult in result) {
                     Console.Write("Identifier:{0},Successful:{1},Cancelled:{2},Exception:{3}", sendResult.UserIdentifier, sendResult.Successful, sendResult.Cancelled, sendResult.Exception);
                     Console.WriteLine();
