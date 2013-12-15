@@ -148,8 +148,7 @@ namespace StefanOssendorf.BulkMailing {
                     for (int i = range.Item1; i < range.Item2; i++) {   
                         SendMail(smtp, mails[i]);
                         if (options.CancellationToken.IsCancellationRequested) {
-                            QueueSmtp(smtp);
-                            return;
+                            break;
                         }
                     }
                     QueueSmtp(smtp);
