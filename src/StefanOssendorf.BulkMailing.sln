@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SendMail", "..\samples\SendSingleMail\SendMail.csproj", "{DA1AB4D8-223D-43D1-9B7B-8BE05E31E20F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{82692C3B-F9DF-4787-9FEA-AC28ECE6FD3E}"
@@ -12,6 +14,13 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{77687723-5D3A-4704-8F85-B8A9C0497E84}"
 	ProjectSection(SolutionItems) = preProject
 		..\README.md = ..\README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{C9267144-250C-4903-951E-CDD4ACF28264}"
+	ProjectSection(SolutionItems) = preProject
+		.nuget\NuGet.Config = .nuget\NuGet.Config
+		.nuget\NuGet.exe = .nuget\NuGet.exe
+		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
 EndProject
 Global
@@ -33,7 +42,7 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{C100241C-E4A4-45A8-898B-1B5529CF52BB} = {2464922C-3199-485A-B056-2EA4C72EA178}
 		{DA1AB4D8-223D-43D1-9B7B-8BE05E31E20F} = {82692C3B-F9DF-4787-9FEA-AC28ECE6FD3E}
+		{C100241C-E4A4-45A8-898B-1B5529CF52BB} = {2464922C-3199-485A-B056-2EA4C72EA178}
 	EndGlobalSection
 EndGlobal
