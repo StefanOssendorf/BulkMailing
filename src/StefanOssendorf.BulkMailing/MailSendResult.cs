@@ -13,7 +13,7 @@ namespace StefanOssendorf.BulkMailing {
         /// <summary>
         /// Gets a value indicating that the sending has been cancelled.
         /// </summary>
-        public bool Cancelled { get; internal set; }
+        public bool Canceled { get; internal set; }
         /// <summary>
         /// Gets a value indicating that an error has occurred.
         /// </summary>
@@ -25,10 +25,14 @@ namespace StefanOssendorf.BulkMailing {
         /// <summary>
         /// The message which was send.
         /// </summary>
-        public MailMessage MailMessage { get; internal set; }
+        public MailMessage MailMessage { get; private set; }
         /// <summary>
         /// The user-defined object.
         /// </summary>
-        public object UserIdentifier { get; internal set; }
+        public object UserIdentifier { get; private set; }
+        internal MailSendResult(MailSenderMessage message) {
+            MailMessage = message.Message;
+            UserIdentifier = message.UserIdentifier;
+        }
     }
 }

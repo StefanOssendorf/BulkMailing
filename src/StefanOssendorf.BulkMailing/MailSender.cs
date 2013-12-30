@@ -3,10 +3,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
-using System.Linq;
 using System.Net;
 using System.Net.Mail;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,8 +18,6 @@ namespace StefanOssendorf.BulkMailing {
         private readonly CancellationTokenSource mCancellationTokenSource;
         private readonly ConcurrentQueue<SmtpClient> mSmtpClients;
         private bool mIsDisposed;
-        private bool mIsInCall;
-        private SmtpClient mSingleSendSmtpClient;
         #endregion
         /// <summary>
         /// Initializes a new instance of the <see cref="MailSender"/> class by using configuration file settings. 
@@ -62,7 +58,7 @@ namespace StefanOssendorf.BulkMailing {
         /// </returns>
         /// <exception cref="ObjectDisposedException">The object has been disposed.</exception>
         public async Task<MailSendResult> SendAsync(MailMessage mailMessage, object userIdentifier) {
-            return await SendAsync(new MailSenderMessage { Message = mailMessage, UserIdentifier = userIdentifier }).ConfigureAwait(false);
+            return await SendAsync(new MailSenderMessage(mailMessage, userIdentifier)).ConfigureAwait(false);
         }
         /// <summary>
         /// Sends the specified message to an SMTP server for delivery as an asynchronous operation.
@@ -73,30 +69,9 @@ namespace StefanOssendorf.BulkMailing {
         /// </returns>
         /// <exception cref="ObjectDisposedException">The object has been disposed.</exception>
         public async Task<MailSendResult> SendAsync(MailSenderMessage message) {
-            ThrowIfDisposed();
-            ThrowIfAlreadyInCall();
-
-            mIsInCall = true;
-            var result = new MailSendResult { MailMessage = message.Message, UserIdentifier = message.UserIdentifier };
-
-            mSingleSendSmtpClient = RetrieveSmtpClient();
-            try {
-                await mSingleSendSmtpClient.SendMailAsync(message.Message).ConfigureAwait(false);
-                result.Successful = true;
-            } catch (OperationCanceledException) {
-                result.Cancelled = true;
-            } catch (Exception exception) {
-                result.Exception = exception;
-                result.HasError = true;
-            } finally {
-                QueueSmtp(mSingleSendSmtpClient);
-                mSingleSendSmtpClient = null;
-                mIsInCall = false;
-            }
-
-            return result;
+            var result = await SendAsync(new List<MailSenderMessage> { message }).ConfigureAwait(false);
+            return result[0];
         }
-
         /// <summary>
         /// Sends the specified <paramref name="mailMessages">messages</paramref> to an smtp server for delivery as an asynchronous operation.
         /// </summary>
@@ -106,17 +81,24 @@ namespace StefanOssendorf.BulkMailing {
         /// </returns>
         public async Task<Collection<MailSendResult>> SendAsync(IEnumerable<MailSenderMessage> mailMessages) {
             ThrowIfDisposed();
-            ThrowIfAlreadyInCall();
+            var blockCollection = new BlockingCollection<MailSenderMessage>();
+            Parallel.ForEach(mailMessages, blockCollection.Add);
+            blockCollection.CompleteAdding();
 
-            mIsInCall = true;
             var result = new Collection<MailSendResult>();
-            try {
-                result = await Task.Factory.StartNew((Func<object, Collection<MailSendResult>>)SendBulkMailMessages, mailMessages, mCancellationTokenSource.Token, TaskCreationOptions.None, TaskScheduler.Default).ConfigureAwait(false);
-            } finally {
-                mIsInCall = false;
-            }
-
+            var tmpResult = SendAsync(blockCollection);
+            await Task.Run(() => tmpResult.Output.GetConsumingEnumerable().ForEach(result.Add)).ConfigureAwait(false);
             return result;
+        }
+        /// <summary>
+        /// Sends the <paramref name="mailMessages">messages</paramref> to an smtp server for delivery as an asynchronous operation.
+        /// </summary>
+        /// <param name="mailMessages">Collection of mails to send.</param>
+        /// <returns></returns>
+        public MailStreamResult SendAsync(BlockingCollection<MailSenderMessage> mailMessages) {
+            ThrowIfDisposed();
+            //return await Task.Factory.StartNew((Func<object, MailStreamResult>)StartStreamSendAsync, mailMessages).ConfigureAwait(false);
+            return StartStreamSendAsync(mailMessages);
         }
         /// <summary>
         /// Cancels an asynchronous operation to send an e-mail message.
@@ -124,40 +106,38 @@ namespace StefanOssendorf.BulkMailing {
         /// <exception cref="ObjectDisposedException">The object has been disposed.</exception>
         public void SendAsyncCancel() {
             ThrowIfDisposed();
-            if (!mIsInCall) {
-                return;
-            }
-            if (mSingleSendSmtpClient != null) {
-                mSingleSendSmtpClient.SendAsyncCancel();
-            }
             if (mCancellationTokenSource != null) {
                 mCancellationTokenSource.Cancel();
             }
         }
-
-        private Collection<MailSendResult> SendBulkMailMessages(object mailMessages) {
-            var messages = new List<MailSenderMessage>((IEnumerable<MailSenderMessage>)mailMessages);
-            var options = new ParallelOptions { CancellationToken = mCancellationTokenSource.Token };
-            var mails = new List<MailSendResult>();
-
-            messages.ForEach(msg => mails.Add(new MailSendResult { MailMessage = msg.Message, UserIdentifier = msg.UserIdentifier }));
-
-            try {
-                Parallel.ForEach(Partitioner.Create(0, mails.Count), options, range => {
-                    SmtpClient smtp = RetrieveSmtpClient();
-                    for (int i = range.Item1; i < range.Item2; i++) {   
-                        SendMail(smtp, mails[i]);
-                        if (options.CancellationToken.IsCancellationRequested) {
-                            break;
+        private MailStreamResult StartStreamSendAsync(object state) {
+            var inputStream = (BlockingCollection<MailSenderMessage>)state;
+            var outputStream = new BlockingCollection<MailSendResult>();
+            var task = Task.Run(() => {
+                try {
+                    Parallel.ForEach(inputStream.GetConsumingPartitioner(), new ParallelOptions { CancellationToken = mCancellationTokenSource.Token }, message => {
+                        var result = new MailSendResult(message);
+                        SmtpClient smtp = null;
+                        try {
+                            smtp = RetrieveSmtpClient();
+                            SendMail(smtp, result);
+                        } catch (OperationCanceledException) {
+                            result.Canceled = true;
+                        } finally {
+                            if (smtp != null) {
+                                QueueSmtp(smtp);
+                            }
+                            outputStream.Add(result);
                         }
-                    }
-                    QueueSmtp(smtp);
-                });
-            } catch (OperationCanceledException) {
-                mails.Where(item => !item.HasError && !item.Successful).ToList().ForEach(item => item.Cancelled = true);
-            }
-
-            return new Collection<MailSendResult>(mails);
+                    });
+                } catch (OperationCanceledException) {
+                    Parallel.ForEach(inputStream.GetConsumingPartitioner(), message => outputStream.Add(new MailSendResult(message) { Canceled = true }));
+                } finally {
+                    outputStream.CompleteAdding();
+                }
+            });
+            task.ConfigureAwait(false);
+            return new MailStreamResult(outputStream, task);
         }
         private static void SendMail(SmtpClient smtp, MailSendResult sendResult) {
             try {
@@ -168,19 +148,12 @@ namespace StefanOssendorf.BulkMailing {
                 sendResult.HasError = true;
             }
         }
-
         #region [ Helper methods ]
         private void ThrowIfDisposed() {
             if (!mIsDisposed) {
                 return;
             }
             throw new ObjectDisposedException(GetType().FullName);
-        }
-        private void ThrowIfAlreadyInCall([CallerMemberName]string callerMemberName = "") {
-            if (!mIsInCall) {
-                return;
-            }
-            throw new InvalidOperationException(string.Format("This {0} has a {1} call in progress.", GetType().Name, callerMemberName));
         }
         private SmtpClient CreateAndConfigureSmtpClient() {
             var smtp = new SmtpClient();
@@ -221,18 +194,11 @@ namespace StefanOssendorf.BulkMailing {
             if (!disposing || mIsDisposed) {
                 return;
             }
-            if (mSingleSendSmtpClient != null) {
-                mSingleSendSmtpClient.Dispose();
-            }
             if (mCancellationTokenSource != null) {
                 mCancellationTokenSource.Dispose();
             }
-            if (!mSmtpClients.IsEmpty) {
-                while (!mSmtpClients.IsEmpty) {
-                    SmtpClient smtp;
-                    mSmtpClients.TryDequeue(out smtp);
-                    smtp.Dispose();
-                }
+            if (mSmtpClients != null) {
+                mSmtpClients.GetConsumingEnumerable().ForEach(smtp => smtp.Dispose());
             }
             mIsDisposed = true;
         }
