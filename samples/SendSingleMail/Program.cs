@@ -32,9 +32,9 @@ namespace SendSingleMail {
             return new MailSender();
         }
 
-        private static SmtpConfiguration CreateSmtpConfiguration() {
+        private static SmtpClientConfiguration CreateSmtpConfiguration() {
             return null;
-            var smtpConfig = new SmtpConfiguration() {
+            var smtpConfig = new SmtpClientConfiguration() {
                 Host = "Host",
                 UserName = "UserName",
                 Port = 25,
@@ -45,8 +45,8 @@ namespace SendSingleMail {
         #endregion
 
         static void Main(string[] args) {
-            SendSingleMailAsyncExample();
-            SendBulkMailExample();
+            //SendSingleMailAsyncExample();
+            //SendBulkMailExample();
             SendStreamMailExample();
         }
 

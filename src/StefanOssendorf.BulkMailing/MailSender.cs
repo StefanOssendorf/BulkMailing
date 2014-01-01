@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
-using System.Net;
 using System.Net.Mail;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,31 +11,37 @@ namespace StefanOssendorf.BulkMailing {
     /// <summary>
     /// Allows applications to send bulk mailings by using the Simple Mail Transfer Protocol (SMTP).
     /// </summary>
-    public class MailSender : IDisposable {
+    public class MailSender : IMailSender {
         #region [ Fields ]
-        private readonly SmtpConfiguration mSmtpConfiguration;
+        private readonly ISmtpClientFactory mSmtpClientFactory;
         private readonly CancellationTokenSource mCancellationTokenSource;
-        private readonly ConcurrentQueue<SmtpClient> mSmtpClients;
-        private bool mIsDisposed;
+        private readonly ConcurrentQueue<ISmtpClient> mSmtpClients;
+        private volatile bool mIsDisposed;
         #endregion
         /// <summary>
-        /// Initializes a new instance of the <see cref="MailSender"/> class by using configuration file settings. 
+        /// Initializes a new instance of the <see cref="MailSender"/> class by using <see cref="SmtpClientFactory"/>.
         /// </summary>
         public MailSender()
-            : this(new EmptySmtpConfiguration()) {
+            : this(new SmtpClientFactory()) {
 
         }
         /// <summary>
-        /// Initializes a new instance of the <see cref="MailSender"/> class by using the provided configuration.
+        /// Initializes a new instance of the <see cref="MailSender"/> class by using the provided configuration for <see cref="SmtpClientFactory"/>.
         /// </summary>
-        /// <param name="smtpConfiguration"></param>
-        public MailSender(SmtpConfiguration smtpConfiguration) {
-            Contract.Requires<ArgumentNullException>(smtpConfiguration != null);
-            mSmtpConfiguration = smtpConfiguration.Clone();
-            mCancellationTokenSource = new CancellationTokenSource();
-            mSmtpClients = new ConcurrentQueue<SmtpClient>();
+        /// <param name="smtpClientConfiguration">Configuration</param>
+        public MailSender(SmtpClientConfiguration smtpClientConfiguration)
+            : this(new SmtpClientFactory(smtpClientConfiguration.Clone())) {
         }
-
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MailSender"/> class by using the provided <see cref="ISmtpClientFactory">factory</see>.
+        /// </summary>
+        /// <param name="smtpClientFactory"></param>
+        public MailSender(ISmtpClientFactory smtpClientFactory) {
+            Contract.Requires<ArgumentNullException>(smtpClientFactory != null);
+            mSmtpClientFactory = smtpClientFactory;
+            mCancellationTokenSource = new CancellationTokenSource();
+            mSmtpClients = new ConcurrentQueue<ISmtpClient>();
+        }
         /// <summary>
         /// Sends the specified message to an SMTP server for delivery as an asynchronous operation.
         /// </summary>
@@ -97,8 +102,7 @@ namespace StefanOssendorf.BulkMailing {
         /// <returns></returns>
         public MailStreamResult SendAsync(BlockingCollection<MailSenderMessage> mailMessages) {
             ThrowIfDisposed();
-            //return await Task.Factory.StartNew((Func<object, MailStreamResult>)StartStreamSendAsync, mailMessages).ConfigureAwait(false);
-            return StartStreamSendAsync(mailMessages);
+            return StartStreamSend(mailMessages);
         }
         /// <summary>
         /// Cancels an asynchronous operation to send an e-mail message.
@@ -110,14 +114,14 @@ namespace StefanOssendorf.BulkMailing {
                 mCancellationTokenSource.Cancel();
             }
         }
-        private MailStreamResult StartStreamSendAsync(object state) {
+        private MailStreamResult StartStreamSend(object state) {
             var inputStream = (BlockingCollection<MailSenderMessage>)state;
             var outputStream = new BlockingCollection<MailSendResult>();
             var task = Task.Run(() => {
                 try {
                     Parallel.ForEach(inputStream.GetConsumingPartitioner(), new ParallelOptions { CancellationToken = mCancellationTokenSource.Token }, message => {
                         var result = new MailSendResult(message);
-                        SmtpClient smtp = null;
+                        ISmtpClient smtp = null;
                         try {
                             smtp = RetrieveSmtpClient();
                             SendMail(smtp, result);
@@ -137,9 +141,10 @@ namespace StefanOssendorf.BulkMailing {
                 }
             });
             task.ConfigureAwait(false);
+            
             return new MailStreamResult(outputStream, task);
         }
-        private static void SendMail(SmtpClient smtp, MailSendResult sendResult) {
+        private static void SendMail(ISmtpClient smtp, MailSendResult sendResult) {
             try {
                 smtp.Send(sendResult.MailMessage);
                 sendResult.Successful = true;
@@ -155,30 +160,15 @@ namespace StefanOssendorf.BulkMailing {
             }
             throw new ObjectDisposedException(GetType().FullName);
         }
-        private SmtpClient CreateAndConfigureSmtpClient() {
-            var smtp = new SmtpClient();
-            if (mSmtpConfiguration.IsEmpty) {
-                return smtp;
-            }
-            // Set UseDefaultCredentials before Credentials otherwise the credentials are overwritten
-            smtp.UseDefaultCredentials = mSmtpConfiguration.UseDefaultCredentials;
-            smtp.Port = mSmtpConfiguration.Port;
-            smtp.Host = mSmtpConfiguration.Host;
-            smtp.DeliveryMethod = SmtpDeliveryMethod.Network;
-            if (!smtp.UseDefaultCredentials) {
-                smtp.Credentials = new NetworkCredential(mSmtpConfiguration.UserName, mSmtpConfiguration.Password);
-            }
-            smtp.EnableSsl = mSmtpConfiguration.EnableSsl;
-            return smtp;
-        }
-        private SmtpClient RetrieveSmtpClient() {
-            SmtpClient smtp;
+        private ISmtpClient RetrieveSmtpClient() {
+            ThrowIfDisposed();
+            ISmtpClient smtp;
             if (!mSmtpClients.TryDequeue(out smtp)) {
-                smtp = CreateAndConfigureSmtpClient();
+                smtp = mSmtpClientFactory.Create();
             }
             return smtp;
         }
-        private void QueueSmtp(SmtpClient smtp) {
+        private void QueueSmtp(ISmtpClient smtp) {
             mSmtpClients.Enqueue(smtp);
         }
         #endregion
@@ -194,11 +184,11 @@ namespace StefanOssendorf.BulkMailing {
             if (!disposing || mIsDisposed) {
                 return;
             }
-            if (mCancellationTokenSource != null) {
-                mCancellationTokenSource.Dispose();
-            }
             if (mSmtpClients != null) {
                 mSmtpClients.GetConsumingEnumerable().ForEach(smtp => smtp.Dispose());
+            }
+            if (mCancellationTokenSource != null) {
+                mCancellationTokenSource.Dispose();
             }
             mIsDisposed = true;
         }

@@ -6,7 +6,7 @@ namespace StefanOssendorf.BulkMailing {
     /// <summary>
     /// Represents the SMTP-configuration.
     /// </summary>
-    public class SmtpConfiguration {
+    public class SmtpClientConfiguration {
         internal virtual Boolean IsEmpty { get { return false; } }
         /// <summary>
         /// Specify whether the <see cref="SmtpClient"/> uses Secure Sockets Layer (SSL) to encrypt the connection.
@@ -34,14 +34,14 @@ namespace StefanOssendorf.BulkMailing {
         public string Password { get; set; }
 
         /// <summary>
-        /// Initialize a new instance of the <see cref="SmtpConfiguration"/> class.
+        /// Initialize a new instance of the <see cref="SmtpClientConfiguration"/> class.
         /// </summary>
-        public SmtpConfiguration() {
+        public SmtpClientConfiguration() {
             Port = 25;
         }
 
-        internal virtual SmtpConfiguration Clone() {
-            return new SmtpConfiguration {
+        internal virtual SmtpClientConfiguration Clone() {
+            return new SmtpClientConfiguration {
                 EnableSsl = EnableSsl,
                 Host = Host,
                 Password = Password,
