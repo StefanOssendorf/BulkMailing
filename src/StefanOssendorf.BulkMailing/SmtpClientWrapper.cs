@@ -8,11 +8,18 @@ namespace StefanOssendorf.BulkMailing {
         private bool mIsDisposed;
         private readonly SmtpClient mClient;
         #endregion
-
-        public SmtpClientWrapper() {
-            mClient = new SmtpClient();
+        #region [ Constructor ]
+        public SmtpClientWrapper()
+            : this(new SmtpClient()) {
         }
-
+        /// <summary>
+        /// For testing purpose.
+        /// </summary>
+        /// <param name="client"></param>
+        internal SmtpClientWrapper(SmtpClient client) {
+            mClient = client;
+        }
+        #endregion
         #region Implementation of ISmtpClient
         public void Send(MailMessage mailMessage) {
             mClient.Send(mailMessage);
