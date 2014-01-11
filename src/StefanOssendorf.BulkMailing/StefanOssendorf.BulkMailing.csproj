@@ -72,8 +72,9 @@
     <Reference Include="ParallelExtensionsExtras">
       <HintPath>..\packages\MSFT.ParallelExtensionsExtras.1.2.0\lib\ParallelExtensionsExtras.dll</HintPath>
     </Reference>
-    <Reference Include="StefanOssendorf.ExtensionMethodCollection">
-      <HintPath>..\packages\StefanOssendorf.ExtensionMethodCollection.0.2.0.1\lib\portable-net4+sl5+wp8+win8\StefanOssendorf.ExtensionMethodCollection.dll</HintPath>
+    <Reference Include="StefanOssendorf.ExtensionMethodCollection, Version=0.3.5124.23138, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\StefanOssendorf.ExtensionMethodCollection.0.3.0.0\lib\portable-net4+sl5+wp8+win8\StefanOssendorf.ExtensionMethodCollection.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -84,6 +85,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IEnumerableTExtensions.cs" />
     <Compile Include="IMailSender.cs" />
     <Compile Include="ISmtpClient.cs" />
     <Compile Include="ISmtpClientFactory.cs" />

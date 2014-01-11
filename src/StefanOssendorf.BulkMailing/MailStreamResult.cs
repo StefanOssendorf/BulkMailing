@@ -10,32 +10,31 @@ namespace StefanOssendorf.BulkMailing {
     public class MailStreamResult {
         private readonly Task mSendingTask;
 
-        internal MailStreamResult(BlockingCollection<MailSendResult> output, Task sendingTask) {
+        internal MailStreamResult(BlockingCollection<MailSendResult> result, Task sendingTask) {
             Contract.Requires<ArgumentNullException>(sendingTask != null);
-            Contract.Requires<ArgumentNullException>(output != null);
-            Output = output;
+            Contract.Requires<ArgumentNullException>(result != null);
+            Result = result;
             mSendingTask = sendingTask;
         }
         /// <summary>
-        /// Gets the output of this sending.
+        /// Gets the Result of this sending.
         /// </summary>
-        public BlockingCollection<MailSendResult> Output { get; private set; }
+        public BlockingCollection<MailSendResult> Result { get; private set; }
         /// <summary>
         /// Gets whether this sending instance has completed execution due to being canceled.;
         /// </summary>
-        public bool IsCanceled { get { return mSendingTask.IsCanceled; } }
+        public bool IsStopped { get { return mSendingTask.IsCanceled; } }
         /// <summary>
         /// Gets whether this sending has completed.
         /// </summary>
-        public bool IsCompleted { get { return mSendingTask.IsCompleted; } }
-        /// <summary>
-        /// Gets the <see cref="AggregateException"/> that caused the sending to end prematurely. If the sending completed successfully or has not yet thrown any exceptions, this will return null. 
-        /// </summary>
-        public Exception Exception { get { return mSendingTask.Exception; } }
+        public bool IsFinished { get { return mSendingTask.IsCompleted; } }
         /// <summary>
         /// Gets whether the sending completed due to an unhandled exception.
         /// </summary>
         public bool HasError { get { return mSendingTask.IsFaulted; } }
-
+        /// <summary>
+        /// Gets the <see cref="AggregateException"/> that caused the sending to end prematurely. If the sending completed successfully or has not yet thrown any exceptions, this will return null. 
+        /// </summary>
+        public Exception Exception { get { return mSendingTask.Exception; } }
     }
 }

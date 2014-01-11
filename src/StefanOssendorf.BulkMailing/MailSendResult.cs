@@ -17,7 +17,7 @@ namespace StefanOssendorf.BulkMailing {
         /// <summary>
         /// Gets a value indicating that an error has occurred.
         /// </summary>
-        public bool HasError { get; internal set; }
+        public bool HasError { get { return Exception.IsNotNull(); } }
         /// <summary>
         /// Gets a value indicating which error occurred during sending.
         /// </summary>
