@@ -50,25 +50,6 @@ namespace SendSingleMail {
             SendStreamMailExample();
         }
 
-        private static void SendSingleMailAsyncExample() {
-            using (var sender = CreateMailSender()) {
-                var message = new MailMessage("from1@domain.de", "to1@domain.de") {
-                    Body = "Das hier ist ein toller Plain Body",
-                    Subject = "Ganz toller Subject"
-                };
-                var t1 = sender.SendAsync(message, "UniqueIdentifier");
-
-                // If you want to cancel the send
-                // sender.SendAsyncCancel();
-
-                var result = t1.Result;
-                Console.WriteLine("Successful: {0}", result.Successful);
-                Console.WriteLine("Canceled: {0}", result.Canceled);
-                Console.WriteLine("Exception: {0}", result.Exception);
-                Console.ReadLine();
-            }
-        }
-
         private static void SendBulkMailExample() {
             using (var sender = CreateMailSender()) {
                 var list = new List<MailSenderMessage>();
@@ -78,21 +59,20 @@ namespace SendSingleMail {
                     string from = string.Format("from{0}@domain.de", i);
                     string subject = string.Format("Subject {0}", i);
                     string body = string.Format("Body {0}", i);
-                    list.Add(new MailSenderMessage() {
+                    list.Add(new MailSenderMessage {
                         Message = new MailMessage(from, to, subject, body),
                         UserIdentifier = i
                     });
                 }
-
-                var t1 = sender.SendAsync(list);
+                var startResult = sender.StartSending(list);
 
                 Console.WriteLine("Press Enter to cancel...");
                 Console.ReadLine();
-                if (!t1.IsCompleted) {
-                    sender.SendAsyncCancel();
+                if (!startResult.IsFinished) {
+                    sender.StopSending();
                 }
 
-                var result = t1.Result;
+                var result = startResult.Result;
                 foreach (var sendResult in result) {
                     Console.Write("Identifier:{0},Successful:{1},Canceled:{2},Exception:{3}", sendResult.UserIdentifier, sendResult.Successful, sendResult.Canceled, sendResult.Exception);
                     Console.WriteLine();
@@ -125,8 +105,8 @@ namespace SendSingleMail {
                     Console.WriteLine("Press Enter start sending e-mails");
                     Console.ReadLine();
                     Task.Run(() => {
-                        var outputResult = sender.SendAsync(input);
-                        var output = outputResult.Output;
+                        var outputResult = sender.StartSending(input);
+                        var output = outputResult.Result;
                         foreach (var result in output.GetConsumingEnumerable()) {
                             Console.WriteLine("Success: {0}, Canceled: {2}, Identifier: {1}", result.Successful, result.UserIdentifier, result.Canceled);
                         }
@@ -138,7 +118,7 @@ namespace SendSingleMail {
                     Console.WriteLine();
                 } while (exitCode.KeyChar != 'e' && exitCode.KeyChar != 'E');
                 cancellationTokenSource.Cancel();
-                sender.SendAsyncCancel();
+                sender.StopSending();
             }
             Console.ReadLine();
         }
