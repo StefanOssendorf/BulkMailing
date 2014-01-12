@@ -24,7 +24,7 @@ namespace StefanOssendorf.BulkMailing {
         /// <param name="configuration"></param>
         public SmtpClientFactory(SmtpClientConfiguration configuration) {
             Contract.Requires<ArgumentNullException>(configuration.IsNotNull());
-            mConfiguration = configuration;
+            mConfiguration = configuration.Clone();
         }
         #endregion
         #region Implementation of ISmtpClientFactory

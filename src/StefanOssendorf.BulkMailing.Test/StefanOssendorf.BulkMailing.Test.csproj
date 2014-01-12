@@ -52,11 +52,15 @@
   <ItemGroup>
     <Compile Include="EmptySmtpClientConfigurationSpecs.cs" />
     <Compile Include="IEnumerableTExtensionsSpecs.cs" />
+    <Compile Include="MailSendResultSpecs.cs" />
+    <Compile Include="MailStreamResultSpecs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SmtpClientConfigurationSpecs.cs" />
+    <Compile Include="SmtpClientFactorySpecs.cs" />
     <Compile Include="SmtpClientWrapperSpecs.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

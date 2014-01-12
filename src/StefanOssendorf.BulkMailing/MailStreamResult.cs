@@ -25,9 +25,9 @@ namespace StefanOssendorf.BulkMailing {
         /// </summary>
         public bool IsStopped { get { return mSendingTask.IsCanceled; } }
         /// <summary>
-        /// Gets whether this sending has completed.
+        /// Gets whether this sending has successfully completed.
         /// </summary>
-        public bool IsFinished { get { return mSendingTask.IsCompleted; } }
+        public bool IsFinished { get { return mSendingTask.Status == TaskStatus.RanToCompletion; } }
         /// <summary>
         /// Gets whether the sending completed due to an unhandled exception.
         /// </summary>
