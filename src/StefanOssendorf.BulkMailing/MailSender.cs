@@ -76,7 +76,8 @@ namespace StefanOssendorf.BulkMailing {
             Interlocked.Increment(ref mSendingCounter);
 #pragma warning restore 420
             var outputStream = new BlockingCollection<MailSendResult>();
-            var task = Task.Run(() => {
+            var tcs = new TaskCompletionSource<int>();
+            Task.Run(() => {
                 try {
                     Parallel.ForEach(inputStream.GetConsumingPartitioner(), new ParallelOptions { CancellationToken = mCancellationTokenSource.Token }, message => {
                         var result = new MailSendResult(message);
@@ -84,8 +85,6 @@ namespace StefanOssendorf.BulkMailing {
                         try {
                             smtp = RetrieveSmtpClient();
                             SendMail(smtp, result);
-                        } catch (OperationCanceledException) {
-                            result.Canceled = true;
                         } finally {
                             if (smtp != null) {
                                 QueueSmtp(smtp);
@@ -93,18 +92,21 @@ namespace StefanOssendorf.BulkMailing {
                             outputStream.Add(result);
                         }
                     });
+                    tcs.SetResult(1);
                 } catch (OperationCanceledException) {
                     Parallel.ForEach(inputStream.GetConsumingPartitioner(), message => outputStream.Add(new MailSendResult(message) { Canceled = true }));
+                    tcs.SetCanceled();
+                } catch(Exception exc) {
+                    tcs.SetException(exc);
                 } finally {
                     outputStream.CompleteAdding();
 #pragma warning disable 420
                     Interlocked.Decrement(ref mSendingCounter);
 #pragma warning restore 420
                 }
-            });
-            task.ConfigureAwait(false);
+            }).ConfigureAwait(false);
 
-            return new MailStreamResult(outputStream, task);
+            return new MailStreamResult(outputStream, tcs.Task);
         }
         private static void SendMail(ISmtpClient smtp, MailSendResult sendResult) {
             try {

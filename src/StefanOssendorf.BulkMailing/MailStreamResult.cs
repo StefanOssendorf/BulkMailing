@@ -21,19 +21,19 @@ namespace StefanOssendorf.BulkMailing {
         /// </summary>
         public BlockingCollection<MailSendResult> Result { get; private set; }
         /// <summary>
-        /// Gets whether this sending instance has completed execution due to being canceled.;
+        /// Gets whether the backgroundwork instance has completed execution due to being canceled.
         /// </summary>
         public bool IsStopped { get { return mSendingTask.IsCanceled; } }
         /// <summary>
-        /// Gets whether this sending has successfully completed.
+        /// Gets whether the backgroundwork has successfully completed.
         /// </summary>
         public bool IsFinished { get { return mSendingTask.Status == TaskStatus.RanToCompletion; } }
         /// <summary>
-        /// Gets whether the sending completed due to an unhandled exception.
+        /// Gets whether the backgroudnwork has completed due to an unhandled exception.
         /// </summary>
         public bool HasError { get { return mSendingTask.IsFaulted; } }
         /// <summary>
-        /// Gets the <see cref="AggregateException"/> that caused the sending to end prematurely. If the sending completed successfully or has not yet thrown any exceptions, this will return null. 
+        /// Gets the <see cref="AggregateException"/> that caused the backgroundwork to end prematurely. If the backgroundwork completed successfully or has not yet thrown any exceptions, this will return null. 
         /// </summary>
         public Exception Exception { get { return mSendingTask.Exception; } }
     }

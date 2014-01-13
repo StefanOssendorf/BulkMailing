@@ -8,7 +8,6 @@ namespace StefanOssendorf.BulkMailing.Test {
     public class When_setting_poperties {
         static SmtpClient mClient;
         static SmtpClientWrapper mSut;
-        static NetworkCredential mCredential;
 
         Establish context = () => {
             mClient = new SmtpClient();
