@@ -36,10 +36,13 @@ namespace StefanOssendorf.BulkMailing {
         /// Initializes a new instance of the <see cref="MailSender"/> class by using the provided <see cref="ISmtpClientFactory">factory</see>.
         /// </summary>
         /// <param name="smtpClientFactory"></param>
-        public MailSender(ISmtpClientFactory smtpClientFactory) {
+        public MailSender(ISmtpClientFactory smtpClientFactory) :
+            this(smtpClientFactory, new CancellationTokenSource()) {
+        }
+        internal MailSender(ISmtpClientFactory smtpClientFactory, CancellationTokenSource cancellationTokenSource) {
             Contract.Requires<ArgumentNullException>(smtpClientFactory != null);
             mSmtpClientFactory = smtpClientFactory;
-            mCancellationTokenSource = new CancellationTokenSource();
+            mCancellationTokenSource = cancellationTokenSource;
             mSmtpClients = new ConcurrentQueue<ISmtpClient>();
             mSendingCounter = 0;
         }
@@ -96,7 +99,7 @@ namespace StefanOssendorf.BulkMailing {
                 } catch (OperationCanceledException) {
                     Parallel.ForEach(inputStream.GetConsumingPartitioner(), message => outputStream.Add(new MailSendResult(message) { Canceled = true }));
                     tcs.SetCanceled();
-                } catch(Exception exc) {
+                } catch (Exception exc) {
                     tcs.SetException(exc);
                 } finally {
                     outputStream.CompleteAdding();

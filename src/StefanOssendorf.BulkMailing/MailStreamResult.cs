@@ -9,6 +9,10 @@ namespace StefanOssendorf.BulkMailing {
     /// </summary>
     public class MailStreamResult {
         private readonly Task mSendingTask;
+        /// <summary>
+        /// For testing purposes.
+        /// </summary>
+        internal Task BackgroundTask { get { return mSendingTask; } }
 
         internal MailStreamResult(BlockingCollection<MailSendResult> result, Task sendingTask) {
             Contract.Requires<ArgumentNullException>(sendingTask != null);
