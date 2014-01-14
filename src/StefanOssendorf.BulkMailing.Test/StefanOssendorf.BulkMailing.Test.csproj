@@ -4,18 +4,17 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{DA1AB4D8-223D-43D1-9B7B-8BE05E31E20F}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <ProjectGuid>{E0137C79-7182-48BD-8EB3-D76675364DC7}</ProjectGuid>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SendSingleMail</RootNamespace>
-    <AssemblyName>SendSingleMail</AssemblyName>
+    <RootNamespace>StefanOssendorf.BulkMailing.Test</RootNamespace>
+    <AssemblyName>StefanOssendorf.BulkMailing.Test</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\src\</SolutionDir>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -25,7 +24,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -34,6 +32,21 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="FakeItEasy">
+      <HintPath>..\packages\FakeItEasy.1.16.0\lib\net40\FakeItEasy.dll</HintPath>
+    </Reference>
+    <Reference Include="Machine.Specifications, Version=0.6.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Machine.Specifications.0.6.2\lib\net45\Machine.Specifications.dll</HintPath>
+    </Reference>
+    <Reference Include="Machine.Specifications.Clr4, Version=0.6.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Machine.Specifications.0.6.2\lib\net45\Machine.Specifications.Clr4.dll</HintPath>
+    </Reference>
+    <Reference Include="Machine.Specifications.Should, Version=0.6.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Machine.Specifications.0.6.2\lib\net45\Machine.Specifications.Should.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -43,14 +56,22 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Program.cs" />
+    <Compile Include="EmptySmtpClientConfigurationSpecs.cs" />
+    <Compile Include="IEnumerableTExtensionsSpecs.cs" />
+    <Compile Include="MailSenderSpecs.cs" />
+    <Compile Include="MailSendResultSpecs.cs" />
+    <Compile Include="MailStreamResultSpecs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SmtpClientConfigurationSpecs.cs" />
+    <Compile Include="SmtpClientFactorySpecs.cs" />
+    <Compile Include="SmtpClientWrapperSpecs.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\StefanOssendorf.BulkMailing\StefanOssendorf.BulkMailing.csproj">
+    <ProjectReference Include="..\StefanOssendorf.BulkMailing\StefanOssendorf.BulkMailing.csproj">
       <Project>{c100241c-e4a4-45a8-898b-1b5529cf52bb}</Project>
       <Name>StefanOssendorf.BulkMailing</Name>
     </ProjectReference>
