@@ -67,6 +67,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Release\StefanOssendorf.BulkMailing.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="ParallelExtensionsExtras">
