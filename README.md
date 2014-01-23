@@ -34,7 +34,7 @@ Suggestions are always welcome!
 
 ----
 *For testing I'm using [mailtrap.io][mailtrap]. It's free and easy to use.<br/>
-Written with [Notepag.es][notepag]*
+Written with [Notepag.es][notepag] and [Markdownpad]*
 
 
 [mailtrap]: http://mailtrap.io
@@ -42,3 +42,4 @@ Written with [Notepag.es][notepag]*
 [blocking collection]: http://msdn.microsoft.com/de-de/library/dd267312%28v=vs.110%29.aspx
 [IEnumerable T]: http://msdn.microsoft.com/de-de/library/9eekhta0%28v=vs.110%29.aspx
 [smtpMsdn]: http://msdn.microsoft.com/de-de/library/ms164240%28v=vs.110%29.aspx
+[Markdownpad]: http://markdownpad.com/
