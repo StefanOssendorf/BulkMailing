@@ -127,7 +127,6 @@ namespace StefanOssendorf.BulkMailing {
             throw new ObjectDisposedException(GetType().FullName);
         }
         private ISmtpClient RetrieveSmtpClient() {
-            ThrowIfDisposed();
             ISmtpClient smtp;
             if (!mSmtpClients.TryDequeue(out smtp)) {
                 smtp = mSmtpClientFactory.Create();

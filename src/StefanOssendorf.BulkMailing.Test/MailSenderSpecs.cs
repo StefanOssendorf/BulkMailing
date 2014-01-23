@@ -29,18 +29,20 @@ namespace StefanOssendorf.BulkMailing.Test {
             static List<MailSenderMessage> mMessages;
             static MailStreamResult mResult;
             static ISmtpClient mClient;
+            static int mCounter;
 
             Establish context = () => {
                 var facotry = A.Fake<ISmtpClientFactory>();
                 mClient = A.Fake<ISmtpClient>();
                 A.CallTo(() => facotry.Create()).Returns(mClient);
-                A.CallTo(() => mClient.Send(null)).WithAnyArguments().Invokes(() => { int i = 10; });
+                A.CallTo(() => mClient.Send(null)).WithAnyArguments().Invokes(() => Interlocked.Increment(ref mCounter));
                 mSender = new MailSender(facotry);
 
                 mMessages = new List<MailSenderMessage>();
                 for (int i = 1; i < 11; i++) {
                     mMessages.Add(CreateMessage(i));
                 }
+                mCounter = 0;
             };
 
             Because of = () => {
@@ -48,7 +50,7 @@ namespace StefanOssendorf.BulkMailing.Test {
                 mResult.BackgroundTask.Wait();
             };
 
-            It Should_call_client_send_10_times = () => A.CallTo(() => mClient.Send(null)).WithAnyArguments().MustHaveHappened(Repeated.Exactly.Times(10));
+            It Should_call_client_send_10_times = () => mCounter.ShouldEqual(10);
             It Result_should_be_finished = () => mResult.IsFinished.ShouldBeTrue();
 
             static MailSenderMessage CreateMessage(int i) {
@@ -144,7 +146,7 @@ namespace StefanOssendorf.BulkMailing.Test {
                 mSender = new MailSender(facotry);
 
                 mMessages = new List<MailSenderMessage>();
-                for (int i = 0; i < 10; i++) {
+                for (int i = 0; i < 50000; i++) {
                     mMessages.Add(CreateMessage(i));
                 }
             };
@@ -154,6 +156,7 @@ namespace StefanOssendorf.BulkMailing.Test {
 
             Because of = () => {
                 mResult = mSender.StartSending(mMessages);
+                Thread.Sleep(100);
                 mSender.Dispose();
                 mResult.Result.GetConsumingEnumerable().ForEach(msg => mResultMessages.Add(msg));
             };
@@ -194,11 +197,11 @@ namespace StefanOssendorf.BulkMailing.Test {
 
             Because of = () => {
                 mResult = mSender.StartSending(mMessages);
-                mResult.BackgroundTask.Wait();
+                mResult.BackgroundTask.Await();
                 mSender.Dispose();
             };
 
-            It Should_call_dipose_on_all_smtpClients = () => mClients.ForEach(client => A.CallTo(() => client.Dispose()).MustHaveHappened());
+            It Should_call_dispose_on_all_smtpClients = () => mClients.ForEach(client => A.CallTo(() => client.Dispose()).MustHaveHappened());
         }
 
         [Subject(typeof(MailSender))]
