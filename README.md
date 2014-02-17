@@ -4,7 +4,7 @@ BulkMailing is a library to provide an easy way to send bulk mailings.<br/>
 It's designed to support [producer consumer][blocking collection] scenarios or any other [lists][IEnumerable T] as well.
 
 How to use
-==
+```csharp
     var emailsToSend = new List<MailSenderMessage> {
         new MailSenderMessage(message: new MailMessage("from@from.de", "to@to.de"), userIdentifier: Guid.NewGuid())
 		// and much more ;-)
@@ -23,7 +23,7 @@ How to use
 		    sendResult.MailMessage & sendResult.UserIdentifier
 	    }
     }
-
+```
 - Create an MailSender() using the default configuration of SmtpClient. [`<system.net><mailSettings><smtp ...>`][smtpMsdn].
 - Prepare your list of e-mails and call StartSending().
 - Now you can check HasError, IsFinished or IsStopped if something happend to the background Task.
